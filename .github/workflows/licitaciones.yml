@@ -1,0 +1,37 @@
+﻿name: B2B Procurement Radar Autonomous Scanner
+
+on:
+  schedule:
+    - cron: '0 11,15,19 * * 1-5' # De lunes a viernes a las 8hs, 12hs y 16hs Arg
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  scan-tenders:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 3. Ejecutar Radar de Licitaciones
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node index.js
+
+      - name: 4. Auto-Commit de Base Histórica
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/licitaciones_vistas.json
+          git diff --staged --quiet || (git commit -m "chore(data): actualizar registro de licitaciones analizadas [skip ci]" && git push)
