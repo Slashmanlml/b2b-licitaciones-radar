@@ -1,46 +1,84 @@
-﻿# 🏛️ B2B Licitaciones Radar — Monitor Autónomo de Compras Públicas
+# B2B Licitaciones Radar
 
-![Radar Status](https://github.com/Slashmanlml/b2b-licitaciones-radar/actions/workflows/licitaciones.yml/badge.svg)
-![Business Model](https://img.shields.io/badge/Model-B2B_SaaS_Alerts-gold?style=flat)
-![NodeJS](https://img.shields.io/badge/Node.js-20.x-green?style=flat&logo=node.js)
-![Cloud Engine](https://img.shields.io/badge/Engine-GitHub_Actions_Cron-blue?style=flat&logo=githubactions)
+Pipeline de alertas de licitaciones públicas: obtiene llamados, los normaliza,
+descarta los ya vistos y despacha los nuevos por Telegram. Corre solo en GitHub
+Actions con un cron.
 
-Micro-servicio autónomo de **Inteligencia Comercial B2B**. Rastrea, filtra y categoriza llamados a licitaciones públicas y contrataciones estatales en tiempo real, despachando alertas instantáneas a empresas proveedoras antes de que venzan los pliegos.
+> ### ⚠️ Estado: prototipo
+>
+> **El proveedor de datos real todavía no está implementado.** Hoy el pipeline
+> corre contra un proveedor de datos de ejemplo (`fixture`) con tres licitaciones
+> ficticias y enlaces a `example.org`.
+>
+> Lo que está terminado y probado es el pipeline: normalización, identidad
+> estable, deduplicación, formato y despacho. Falta la pieza que consulta el
+> portal — ver [`src/providers/comprar.js`](src/providers/comprar.js), donde está
+> documentado qué hace falta resolver.
+>
+> Cuando corre con datos de ejemplo, cada alerta lo dice en el propio mensaje.
 
----
+## Cómo funciona
 
-## 💼 Modelo de Negocio (Monetización)
-
-```text
-[Portales Estatales / Boletines] 
-               │
-               ▼
-[B2B Radar (Scraping + Filtros)] 
-               │
-               ▼
-   [Canal VIP / Alerta Directa] ───► [Empresas Suscritas ($20 - $50 USD/mes)]
+```
+provider.fetchTenders()      obtiene los llamados crudos
+        ↓
+normalize()                  valida campos y calcula un id estable del contenido
+        ↓
+SeenStore.filterNew()        descarta los que ya se despacharon
+        ↓
+buildAlert()                 arma el mensaje (marcado si son datos de ejemplo)
+        ↓
+TelegramNotifier.send()      despacha y verifica la respuesta de la API
+        ↓
+SeenStore.commit()           persiste el historial
 ```
 
-### 🏷️ Planes de Membresía:
-- **Plan Starter ($20 USD/mes):** Alertas de 1 rubro específico (ej: Tecnología) vía Telegram.
-- **Plan Pro ($45 USD/mes):** Alertas multirubro, cálculo de presupuesto estimado y fecha límite con 15 días de anticipación.
-- **Plan Enterprise ($90 USD/mes):** Integración directa a webhook de Slack/Discord interno de la empresa y resumen diario en PDF.
+La fuente de datos está detrás de una interfaz: agregar un portal nuevo es
+escribir un módulo en `src/providers/` que exponga `fetchTenders()` y devuelva
+objetos con los campos que espera `normalize()`. El resto del pipeline no cambia.
 
----
-
-## 🚀 Características Técnicas
-
-- **Filtros por Rubro:** Categorización automática (Tecnología, Salud, Obra Pública, Seguridad).
-- **Detección Anti-Duplicados:** Memoria histórica con persistencia en Git (`data/licitaciones_vistas.json`).
-- **Despacho Inmediato:** Formateo en Markdown y entrega vía Telegram Bot API.
-- **Infraestructura Serverless:** Ejecución en GitHub Actions con Cron programado para días hábiles.
-
----
-
-## 💻 Ejecución Local
+## Uso
 
 ```bash
-git clone https://github.com/Slashmanlml/b2b-licitaciones-radar.git
-cd b2b-licitaciones-radar
-node index.js
+node index.js                 # datos de ejemplo (por defecto)
+PROVIDER=comprar node index.js # falla explícitamente: todavía no implementado
+npm test                       # 19 tests, sin dependencias externas
 ```
+
+Para el despacho por Telegram, copiar `.env.example` y completar
+`TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`. Sin esas variables el pipeline corre
+igual y solo omite el envío.
+
+## Decisiones de diseño
+
+**El id sale del contenido, no del azar.** Se calcula como un hash de
+`organismo|titulo|apertura`, así la misma licitación produce el mismo id en
+corridas distintas y la deduplicación funciona. En la primera versión el id se
+generaba con `Math.random()`, de modo que nunca coincidía con el histórico y las
+mismas licitaciones se re-despachaban en cada ejecución.
+
+**El proveedor sin implementar falla fuerte.** `src/providers/comprar.js` lanza
+una excepción en vez de devolver datos de ejemplo. Un dato inventado que parece
+real es peor que un error: se propaga silencioso hasta el destinatario.
+
+**El despacho verifica la respuesta.** `TelegramNotifier` mira el `ok` de la API
+antes de contar el mensaje como enviado, y devuelve `false` si falló.
+
+**El historial tolera archivos corruptos.** Un JSON ilegible se trata como
+historial vacío y se avisa por consola, en vez de cortar la corrida.
+
+## Pendiente
+
+- [ ] Implementar el proveedor real (fuente, paginación, ritmo de requests,
+      términos de uso del portal)
+- [ ] Filtro de rubros por suscriptor
+- [ ] Alerta de vencimiento próximo de pliegos ya notificados
+
+## Stack
+
+Node 20+, sin dependencias de producción. Tests con el runner nativo
+(`node --test`). CI en GitHub Actions.
+
+## Licencia
+
+MIT

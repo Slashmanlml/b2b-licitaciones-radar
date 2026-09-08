@@ -1,0 +1,47 @@
+name: Radar de licitaciones
+
+on:
+  schedule:
+    # Lunes a viernes, 8/12/16 hora argentina (UTC-3).
+    - cron: '0 11,15,19 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm test
+
+  scan:
+    needs: test
+    runs-on: ubuntu-latest
+    # Sin cron manual no tiene sentido escanear: evita correr en cada push.
+    if: github.event_name != 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ejecutar el radar
+        env:
+          PROVIDER: ${{ vars.PROVIDER || 'fixture' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: npm start
+
+      - name: Persistir el historial si cambió
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/licitaciones_vistas.json
+          git diff --staged --quiet && echo "sin cambios" && exit 0
+          git commit -m "chore(data): actualizar historial de licitaciones [skip ci]"
+          git push

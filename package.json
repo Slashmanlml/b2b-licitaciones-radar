@@ -1,13 +1,13 @@
 {
   "name": "b2b-licitaciones-radar",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Pipeline de alertas de licitaciones publicas. Prototipo: el proveedor de datos real todavia no esta implementado.",
   "main": "index.js",
+  "engines": { "node": ">=20" },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node --test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "license": "MIT"
 }

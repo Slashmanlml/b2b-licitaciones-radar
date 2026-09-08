@@ -1,41 +1,52 @@
-﻿class TelegramNotifier {
-    static async dispatchTenderAlert(tender) {
-        const token = process.env.TELEGRAM_BOT_TOKEN;
-        const chatId = process.env.TELEGRAM_CHAT_ID;
+'use strict';
 
-        if (!token || !chatId) {
-            console.log('⚠️ [Telegram] Sin credenciales configuradas, saltando despacho.');
-            return;
-        }
+const TELEGRAM_API = 'https://api.telegram.org';
 
-        const mensaje = 
-`🏛️ *NUEVA LICITACIÓN PÚBLICA DETECTADA*\n\n` +
-`📋 *Pliego:* ${tender.titulo}\n` +
-`🏢 *Organismo:* ${tender.organismo}\n` +
-`🏷️ *Rubro:* \`${tender.categoria}\`\n` +
-`💰 *Monto Estimado:* ${tender.montoEstimado}\n` +
-`⏳ *Fecha de Cierre:* ${tender.apertura}\n` +
-`🆔 *ID:* \`${tender.id}\`\n\n` +
-`🔗 [Ver Pliego y Bases Oficiales](${tender.enlace})\n\n` +
-`🔔 _Alerta exclusiva B2B Radar • Suscripción Activa_`;
+/**
+ * Despacho por Telegram.
+ *
+ * A diferencia de la versión anterior, verifica la respuesta de la API: antes
+ * se hacía `await fetch(...)` sin mirar el resultado y se imprimía "alerta
+ * despachada" aunque Telegram hubiera rechazado el mensaje.
+ */
+class TelegramNotifier {
+  constructor({ token = process.env.TELEGRAM_BOT_TOKEN, chatId = process.env.TELEGRAM_CHAT_ID } = {}) {
+    this.token = token;
+    this.chatId = chatId;
+  }
 
-        try {
-            const url = `https://api.telegram.org/bot${token}/sendMessage`;
-            await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: mensaje,
-                    parse_mode: 'Markdown',
-                    disable_web_page_preview: true
-                })
-            });
-            console.log(`📱 [Telegram] Alerta despachada para licitación: ${tender.id}`);
-        } catch (e) {
-            console.error('❌ Error al despachar Telegram:', e.message);
-        }
+  get configured() {
+    return Boolean(this.token && this.chatId);
+  }
+
+  /** Devuelve true si Telegram confirmó el envío. Nunca lanza: informa y sigue. */
+  async send(text) {
+    if (!this.configured) {
+      console.log('[telegram] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID sin configurar: no se despacha.');
+      return false;
     }
+    try {
+      const res = await fetch(`${TELEGRAM_API}/bot${this.token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: this.chatId,
+          text,
+          parse_mode: 'MarkdownV2',
+          disable_web_page_preview: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        console.error(`[telegram] rechazado (HTTP ${res.status}): ${data.description || 'sin detalle'}`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error(`[telegram] error de red: ${err.message}`);
+      return false;
+    }
+  }
 }
 
-module.exports = TelegramNotifier;
+module.exports = { TelegramNotifier };
