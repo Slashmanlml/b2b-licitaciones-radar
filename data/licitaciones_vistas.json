@@ -1,5 +1,55 @@
 [
   {
+    "organismo": "379 - Estado Mayor General de la Armada",
+    "titulo": "SICC ADQUISICIÓN DE EQUIPOS DE COMUNICACIONES SATELITALES. (38/19-0549-LPR26)",
+    "categoria": "LICITACION PRIVADA",
+    "montoEstimado": "$ 43,465.62",
+    "apertura": "07/08/2026 07:00:00 a.m.",
+    "enlace": "https://datos.gob.ar/dataset/sistema-de-contrataciones-electronicas",
+    "detectadaEn": "2026-09-09T21:29:46.481Z",
+    "id": "LIC-91f090942a05"
+  },
+  {
+    "organismo": "623 - Servicio Nacional de Sanidad y Calidad Agroalimentaria",
+    "titulo": "Contratación del Servicio de Limpieza en Sede Central y dependencias del SENASA por DOCE (12) meses (52-0023-LPU26)",
+    "categoria": "LICITACION PÚBLICA",
+    "montoEstimado": "$ 2,688,425,418.00",
+    "apertura": "20/08/2026 10:00:00 a.m.",
+    "enlace": "https://datos.gob.ar/dataset/sistema-de-contrataciones-electronicas",
+    "detectadaEn": "2026-09-09T21:29:46.481Z",
+    "id": "LIC-cd7bb413a537"
+  },
+  {
+    "organismo": "343 - Ministerio de Seguridad",
+    "titulo": "Adquisición de Sistema de Cuerdas y Equipamiento para Operaciones Verticales (347-0015-LPU26)",
+    "categoria": "LICITACION PÚBLICA",
+    "montoEstimado": "$ 384,170,292.33",
+    "apertura": "07/08/2026 12:00:00 p.m.",
+    "enlace": "https://datos.gob.ar/dataset/sistema-de-contrataciones-electronicas",
+    "detectadaEn": "2026-09-09T21:29:46.481Z",
+    "id": "LIC-2b3bd64b84f9"
+  },
+  {
+    "organismo": "343 - Ministerio de Seguridad",
+    "titulo": "Serv. de Mant. preventivo y correctivo de ascensores del Ministerio de Seguridad Nacional (347-0004-LPR26)",
+    "categoria": "LICITACION PRIVADA",
+    "montoEstimado": "$ 59,680,625.82",
+    "apertura": "07/08/2026 12:00:00 p.m.",
+    "enlace": "https://datos.gob.ar/dataset/sistema-de-contrataciones-electronicas",
+    "detectadaEn": "2026-09-09T21:29:46.481Z",
+    "id": "LIC-4951995567d2"
+  },
+  {
+    "organismo": "374 - Estado Mayor General del Ejercito",
+    "titulo": "Adquisición de material de Suturas Reabsorbibles  y  NO Reabsorbibles para el HMC (84/26-0404-LPU26)",
+    "categoria": "LICITACION PÚBLICA",
+    "montoEstimado": "$ 129,497,860.24",
+    "apertura": "05/08/2026 09:00:00 a.m.",
+    "enlace": "https://datos.gob.ar/dataset/sistema-de-contrataciones-electronicas",
+    "detectadaEn": "2026-09-09T21:29:46.481Z",
+    "id": "LIC-bf0b65352344"
+  },
+  {
     "organismo": "Ministerio de Salud (organismo de ejemplo)",
     "titulo": "Adquisición de equipamiento informático y servidores",
     "categoria": "TECNOLOGIA",
