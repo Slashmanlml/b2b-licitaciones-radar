@@ -4,16 +4,22 @@ Pipeline de alertas de licitaciones públicas: obtiene llamados, los normaliza,
 descarta los ya vistos y despacha los nuevos por Telegram. Corre solo en GitHub
 Actions con un cron.
 
-> ### ⚠️ Estado: prototipo
+> ### ⚠️ Estado: prototipo con proveedor real disponible
 >
-> **El proveedor de datos real todavía no está implementado.** Hoy el pipeline
-> corre contra un proveedor de datos de ejemplo (`fixture`) con tres licitaciones
-> ficticias y enlaces a `example.org`.
+> Por defecto el pipeline corre contra datos de ejemplo (`fixture`) con tres
+> licitaciones ficticias y enlaces a `example.org`. Pero ya existe un proveedor
+> real: `datosgobar`, que lee las convocatorias abiertas de COMPR.AR desde
+> datos.gob.ar (CSV 2016-2026, sin auth).
 >
-> Lo que está terminado y probado es el pipeline: normalización, identidad
-> estable, deduplicación, formato y despacho. Falta la pieza que consulta el
-> portal — ver [`src/providers/comprar.js`](src/providers/comprar.js), donde está
-> documentado qué hace falta resolver.
+> ```bash
+> PROVIDER=datosgobar node index.js   # datos reales
+> ```
+>
+> Notas honestas: el dataset se actualiza por tandas (puede ir semanas atrás del
+> portal), el CSV no trae enlace por fila (el N° de proceso va en el título y el
+> enlace apunta al dataset) y la primera corrida despacha hasta 25 (lo más nuevo
+> primero). El proveedor `comprar` (portal directo, sin API pública) sigue sin
+> implementar — ver [`src/providers/comprar.js`](src/providers/comprar.js).
 >
 > Cuando corre con datos de ejemplo, cada alerta lo dice en el propio mensaje.
 
@@ -40,9 +46,10 @@ objetos con los campos que espera `normalize()`. El resto del pipeline no cambia
 ## Uso
 
 ```bash
-node index.js                 # datos de ejemplo (por defecto)
-PROVIDER=comprar node index.js # falla explícitamente: todavía no implementado
-npm test                       # 19 tests, sin dependencias externas
+node index.js                        # datos de ejemplo (por defecto)
+PROVIDER=datosgobar node index.js    # datos reales de datos.gob.ar
+PROVIDER=comprar node index.js       # falla explícitamente: todavía no implementado
+npm test                             # 31 tests, sin dependencias externas
 ```
 
 Para el despacho por Telegram, copiar `.env.example` y completar

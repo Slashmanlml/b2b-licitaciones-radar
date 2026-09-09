@@ -2,8 +2,9 @@
 
 const fixture = require('./fixture');
 const comprar = require('./comprar');
+const datosgobar = require('./datosgobar');
 
-const PROVIDERS = { fixture, comprar };
+const PROVIDERS = { fixture, comprar, datosgobar };
 
 /**
  * Elige el proveedor de datos según la variable de entorno PROVIDER.
