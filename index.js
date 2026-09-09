@@ -6,6 +6,7 @@ const { normalize } = require('./src/tender');
 const { SeenStore } = require('./src/store');
 const { buildAlert } = require('./src/format');
 const { TelegramNotifier } = require('./src/notifier');
+const { parseSubscribers, matchSubscribers } = require('./src/subscribers');
 const logger = require('./src/logger');
 
 const DISPATCH_DELAY_MS = 800;
@@ -32,12 +33,21 @@ async function main() {
   logger.log(`[radar] recibidas: ${tenders.length} | nuevas: ${nuevas.length}`);
 
   const notifier = new TelegramNotifier();
+  const subscribers = parseSubscribers();
+  if (subscribers.length > 1) {
+    logger.log(`[radar] ${subscribers.length} suscriptores con filtro de rubros.`);
+  }
   let despachadas = 0;
+  let envios = 0;
 
   for (const tender of nuevas) {
-    const ok = await notifier.send(buildAlert(tender, { demo }));
-    if (ok) despachadas++;
-    if (nuevas.length > 1) await sleep(DISPATCH_DELAY_MS);
+    const destinos = matchSubscribers(tender, subscribers);
+    for (const chatId of destinos) {
+      if (envios > 0) await sleep(DISPATCH_DELAY_MS);
+      envios++;
+      const ok = await notifier.send(buildAlert(tender, { demo }), chatId);
+      if (ok) despachadas++;
+    }
   }
 
   // El historial se actualiza aunque el despacho no esté configurado: lo que

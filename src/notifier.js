@@ -21,13 +21,13 @@ class TelegramNotifier {
   }
 
   /** Devuelve true si Telegram confirmó el envío. Nunca lanza: informa y sigue. */
-  async send(text) {
-    if (!this.configured) {
-      logger.warn('[telegram] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID sin configurar: no se despacha.');
+  async send(text, chatId = this.chatId) {
+    if (!this.token || !chatId) {
+      logger.warn('[telegram] sin token o chat destino: no se despacha.');
       return false;
     }
     const res = await callTelegramApi(this.token, 'sendMessage', {
-      chat_id: this.chatId,
+      chat_id: chatId,
       text,
       parse_mode: 'MarkdownV2',
       disable_web_page_preview: true,

@@ -35,6 +35,8 @@ jobs:
       - name: Ejecutar el radar
         env:
           PROVIDER: ${{ vars.PROVIDER || 'fixture' }}
+          SUBSCRIBERS_JSON: ${{ vars.SUBSCRIBERS_JSON }}
+          DATOSGOBAR_MAX_ROWS: ${{ vars.DATOSGOBAR_MAX_ROWS }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: npm start

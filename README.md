@@ -75,11 +75,22 @@ falló. Errores de red y HTTP 429/5xx se reintentan con backoff exponencial.
 **El historial tolera archivos corruptos.** Un JSON ilegible se trata como
 historial vacío y se avisa por consola, en vez de cortar la corrida.
 
+## Suscriptores por rubro
+
+Cada suscriptor elige qué categorías recibir. Se configura con la variable
+`SUBSCRIBERS_JSON` (en GitHub: variable del repo, no secret: los chat IDs no
+son secretos pero mejor no commitearlos):
+
+```bash
+SUBSCRIBERS_JSON='[{"chatId":"123","categorias":["TECNOLOGIA","SALUD"]}]'
+```
+
+Lista vacía o `"*"` = recibe todo. Sin esa variable se usa `TELEGRAM_CHAT_ID`
+como destino único. Ante JSON inválido se vuelve al destino único (fail-safe:
+mejor mandar de más que silenciar).
+
 ## Pendiente
 
-- [ ] Implementar el proveedor real (fuente, paginación, ritmo de requests,
-      términos de uso del portal)
-- [ ] Filtro de rubros por suscriptor
 - [ ] Alerta de vencimiento próximo de pliegos ya notificados
 
 ## Stack
