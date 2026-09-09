@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const logger = require('./logger');
 
 const DEFAULT_FILE = path.join(__dirname, '..', 'data', 'licitaciones_vistas.json');
 const MAX_HISTORY = 500;
@@ -27,7 +28,7 @@ class SeenStore {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf-8'));
       return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
-      console.warn(`[store] historial ilegible (${err.message}); se arranca vacío.`);
+      logger.warn(`[store] historial ilegible (${err.message}); se arranca vacío.`);
       return [];
     }
   }

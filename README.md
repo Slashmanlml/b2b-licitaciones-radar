@@ -61,8 +61,9 @@ mismas licitaciones se re-despachaban en cada ejecución.
 una excepción en vez de devolver datos de ejemplo. Un dato inventado que parece
 real es peor que un error: se propaga silencioso hasta el destinatario.
 
-**El despacho verifica la respuesta.** `TelegramNotifier` mira el `ok` de la API
-antes de contar el mensaje como enviado, y devuelve `false` si falló.
+**El despacho verifica la respuesta y reintenta.** `TelegramNotifier` mira el
+`ok` de la API antes de contar el mensaje como enviado, y devuelve `false` si
+falló. Errores de red y HTTP 429/5xx se reintentan con backoff exponencial.
 
 **El historial tolera archivos corruptos.** Un JSON ilegible se trata como
 historial vacío y se avisa por consola, en vez de cortar la corrida.
@@ -78,6 +79,17 @@ historial vacío y se avisa por consola, en vez de cortar la corrida.
 
 Node 20+, sin dependencias de producción. Tests con el runner nativo
 (`node --test`). CI en GitHub Actions.
+
+## Docker y logs
+
+```bash
+npm run docker:build
+docker run --rm --env-file .env b2b-licitaciones-radar
+```
+
+`LOG_LEVEL` controla el nivel de log (`debug|info|warn|error`, default `info`).
+Los llamados a Telegram reintentan errores de red y HTTP 429/5xx con backoff
+exponencial (3 intentos); los 4xx fallan rápido sin reintentar.
 
 ## Licencia
 
