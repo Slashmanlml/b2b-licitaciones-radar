@@ -30,4 +30,31 @@ const buildAlert = (tender, { demo = false } = {}) => {
   return lines.join('\n');
 };
 
-module.exports = { buildAlert, escapeMd };
+/**
+ * Arma el mensaje de vencimiento próximo para una licitación ya notificada.
+ * `diasRestantes` 0 = abre hoy.
+ */
+const buildExpiryAlert = (tender, { demo = false } = {}) => {
+  const cuando = tender.diasRestantes === 0
+    ? 'abre *HOY*'
+    : `vence en *${tender.diasRestantes} día(s)*`;
+  const lines = [];
+  if (demo) lines.push('⚠️ *DATOS DE EJEMPLO — no es una licitación real*', '');
+  lines.push(
+    `⏳ *¡El pliego ${cuando}!*`,
+    '',
+    `📋 *Pliego:* ${escapeMd(tender.titulo)}`,
+    `🏢 *Organismo:* ${escapeMd(tender.organismo)}`,
+    `🏷️ *Rubro:* ${escapeMd(tender.categoria)}`
+  );
+  if (tender.montoEstimado) lines.push(`💰 *Monto estimado:* ${escapeMd(tender.montoEstimado)}`);
+  lines.push(
+    `⏳ *Apertura:* ${escapeMd(tender.apertura)}`,
+    `🆔 *ID:* ${escapeMd(tender.id)}`,
+    '',
+    `🔗 ${escapeMd(tender.enlace)}`
+  );
+  return lines.join('\n');
+};
+
+module.exports = { buildAlert, buildExpiryAlert, escapeMd };

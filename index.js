@@ -4,7 +4,7 @@
 const { getProvider } = require('./src/providers');
 const { normalize } = require('./src/tender');
 const { SeenStore } = require('./src/store');
-const { buildAlert } = require('./src/format');
+const { buildAlert, buildExpiryAlert } = require('./src/format');
 const { TelegramNotifier } = require('./src/notifier');
 const { parseSubscribers, matchSubscribers } = require('./src/subscribers');
 const logger = require('./src/logger');
@@ -54,8 +54,29 @@ async function main() {
   // registra es "esta licitación ya fue procesada", no "fue enviada".
   store.commit(nuevas);
 
-  logger.log(`[radar] listo. nuevas: ${nuevas.length} | despachadas por Telegram: ${despachadas}`);
-  return { recibidas: tenders.length, nuevas: nuevas.length, despachadas };
+  // Alertas de vencimiento: ya notificadas, abren dentro de EXPIRY_DAYS días
+  // y aún no se avisó su vencimiento. Respetan el filtro de rubros.
+  const expiryDays = Number(process.env.EXPIRY_DAYS) || 3;
+  const porVencer = store.dueForExpiry(expiryDays);
+  let vencimientos = 0;
+  const avisadas = [];
+  for (const tender of porVencer) {
+    const destinos = matchSubscribers(tender, subscribers);
+    let okAlguno = destinos.length === 0;
+    for (const chatId of destinos) {
+      if (envios > 0) await sleep(DISPATCH_DELAY_MS);
+      envios++;
+      const ok = await notifier.send(buildExpiryAlert(tender, { demo }), chatId);
+      if (ok) { vencimientos++; okAlguno = true; }
+    }
+    // Se marca solo si se avisó (o no había a quién): si falló el envío se
+    // reintenta en la próxima corrida en vez de perder la alerta.
+    if (okAlguno) avisadas.push(tender.id);
+  }
+  if (avisadas.length > 0) store.markExpiryAlerted(avisadas);
+
+  logger.log(`[radar] listo. nuevas: ${nuevas.length} | despachadas por Telegram: ${despachadas} | vencimientos: ${vencimientos}`);
+  return { recibidas: tenders.length, nuevas: nuevas.length, despachadas, vencimientos };
 }
 
 if (require.main === module) {

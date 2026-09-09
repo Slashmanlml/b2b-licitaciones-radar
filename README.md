@@ -89,9 +89,17 @@ Lista vacía o `"*"` = recibe todo. Sin esa variable se usa `TELEGRAM_CHAT_ID`
 como destino único. Ante JSON inválido se vuelve al destino único (fail-safe:
 mejor mandar de más que silenciar).
 
+## Vencimientos próximos
+
+En cada corrida, además de lo nuevo, se revisa el historial: licitaciones ya
+notificadas cuya apertura cae dentro de los próximos `EXPIRY_DAYS` días (3 por
+defecto) reciben un aviso ⏳ — una sola vez (queda marcado en el historial).
+Respeta el filtro de rubros por suscriptor. Si el envío falla, no se marca y se
+reintenta en la próxima corrida.
+
 ## Pendiente
 
-- [ ] Alerta de vencimiento próximo de pliegos ya notificados
+Nada abierto por ahora.
 
 ## Stack
 

@@ -6,6 +6,27 @@ const logger = require('./logger');
 
 const DEFAULT_FILE = path.join(__dirname, '..', 'data', 'licitaciones_vistas.json');
 const MAX_HISTORY = 500;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Parsea la fecha de apertura en los formatos que usan los proveedores:
+ * ISO ("2026-09-25", fixture) o "27/05/2026 10:00:00 a.m." (datosgobar).
+ * Devuelve Date (medianoche) o null si no parsea.
+ */
+const parseApertura = value => {
+  const s = String(value || '').trim();
+  let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(s);
+  if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  return null;
+};
+
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
 
 /**
  * Historial de licitaciones ya despachadas, en un JSON plano.
@@ -51,10 +72,43 @@ class SeenStore {
   /** Agrega las nuevas al historial y lo persiste, creando `data/` si no existe. */
   commit(tenders) {
     if (tenders.length === 0) return;
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
     const merged = [...tenders, ...this.load()].slice(0, MAX_HISTORY);
-    fs.writeFileSync(this.file, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
+    this.save(merged);
+  }
+
+  /** Persiste el historial completo, creando `data/` si no existe. */
+  save(history) {
+    fs.mkdirSync(path.dirname(this.file), { recursive: true });
+    fs.writeFileSync(this.file, JSON.stringify(history, null, 2) + '\n', 'utf-8');
+  }
+
+  /**
+   * Licitaciones ya notificadas cuya apertura cae dentro de los próximos
+   * `days` días y aún no recibieron alerta de vencimiento. Cada una vuelve
+   * con `diasRestantes` (0 = abre hoy). Vencidas o sin fecha válida se ignoran.
+   */
+  dueForExpiry(days) {
+    const today = startOfToday().getTime();
+    const out = [];
+    for (const t of this.load()) {
+      if (t.expiryAlertedAt) continue;
+      const fecha = parseApertura(t.apertura);
+      if (!fecha) continue;
+      const diff = Math.round((fecha.getTime() - today) / DAY_MS);
+      if (diff < 0 || diff > days) continue;
+      out.push({ ...t, diasRestantes: diff });
+    }
+    return out;
+  }
+
+  /** Marca licitaciones como "alerta de vencimiento enviada" y persiste. */
+  markExpiryAlerted(ids) {
+    const set = new Set(ids);
+    const history = this.load().map(t =>
+      set.has(t.id) ? { ...t, expiryAlertedAt: new Date().toISOString() } : t
+    );
+    this.save(history);
   }
 }
 
-module.exports = { SeenStore, DEFAULT_FILE, MAX_HISTORY };
+module.exports = { SeenStore, DEFAULT_FILE, MAX_HISTORY, parseApertura };
